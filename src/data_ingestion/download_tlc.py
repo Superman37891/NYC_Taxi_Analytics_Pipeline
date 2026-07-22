@@ -4,12 +4,10 @@ import requests
 from src.utils.s3_client import get_s3_client
 from src.etl.process_taxi_data import check_if_file_exists_in_s3
 import src.config as config
-from src.config import END_YEAR
+from src.config import START_YEAR, END_YEAR
 from datetime import datetime
 
 import logging
-
-START_YEAR = 2024  # The starting year to get data from
 
 logger = logging.getLogger(__name__)
 
