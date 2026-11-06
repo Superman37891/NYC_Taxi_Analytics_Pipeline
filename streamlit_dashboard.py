@@ -1,62 +1,47 @@
 import sys
 import os
 import streamlit as st
+import awswrangler as wr
+import pandas as pd
+
 for key, value in st.secrets.items():
     os.environ[key] = str(value)
 
 # Adds the root directory to the python path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path.insert(0, PROJECT_ROOT)
+BUCKET = st.secrets["YELLOW_TAXI_BUCKET_NAME"]
+DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
-import src.analytics.queries as queries # Now this should work
+@st.cache_data(ttl=3600*6)
+def load_parquet(name: str) -> pd.DataFrame:
+    path = f"{DASHBOARD_PREFIX}/{name}"
+    return wr.s3.read_parquet(path)
 
-from pyathena import connect
-import pandas as pd
-
-connection = connect(
-    s3_staging_dir=st.secrets["YELLOW_TAXI_S3_STAGING_DIR"],
-    region_name=st.secrets["YELLOW_TAXI_AWS_REGION"],
-    aws_access_key_id=st.secrets["YELLOW_TAXI_AWS_ACCESS_KEY_ID"],
-    aws_secret_access_key=st.secrets["YELLOW_TAXI_AWS_SECRET_ACCESS_KEY"],
-    schema_name=st.secrets["YELLOW_TAXI_DATABASE"]
-)
-
-@st.cache_data(ttl=3600)
-def run_query(query):
-    try:
-        return pd.read_sql(query, connection)
-    except Exception as e:
-        st.exception(e)
-        raise
-
-
-# ========================
-# 🎛Sidebar Filters
-# ========================
-st.sidebar.header("Filters")
-
-@st.cache_data(ttl=3600)
-def get_available_years():
-    available_years_df = run_query(queries.AVAILABLE_YEARS_QUERY)
-    available_years_df.columns = available_years_df.columns.str.lower()
-    return sorted(available_years_df["year"].astype(int).tolist(), reverse=True)
-
-available_years = get_available_years()
+# Sidebar
+available_years_df = load_parquet("available_years.parquet")
+available_years = sorted(available_years_df["year"].astype(int).tolist(), reverse=True)
 year_options = ["All Years"] + available_years
 year_selected = st.sidebar.selectbox("Select Year", year_options)
 
-# Create dataframes through Athena queries
-if year_selected == "All Years":
-    monthly_summary_df = run_query(queries.KPI_OVERALL_MONTHLY_SUMMARY_QUERY)
-    payment_summary_df = run_query(queries.KPI_OVERALL_PAYMENT_TYPE_SUMMARY_QUERY)
-    payment_summary_df = payment_summary_df.set_index("payment_method")
-    hourly_summary_df = run_query(queries.OVERALL_HOURLY_TRIPS_QUERY)
-else:
-    monthly_summary_df = run_query(queries.kpi_monthly_summary_query(year_selected))
-    payment_summary_df = run_query(queries.year_payment_type_summary_query(year_selected))
-    payment_summary_df = payment_summary_df.set_index("payment_method")
-    hourly_summary_df = run_query(queries.year_hourly_trips_query(year_selected))
+# Load the pre-computed tables
+monthly_summary_df = load_parquet("monthly_summary_overall.parquet")
+payment_summary_df = load_parquet("payment_summary_overall.parquet")
+hourly_summary_df  = load_parquet("hourly_summary_overall.parquet")
+
+# Filter by specific years if not all years selected
+if year_selected != "All Years":
+    year_selected - int(year_selected)
+    if "year" in monthly_summary_df.columns:
+        monthly_summary_df = monthly_summary_df[monthly_summary_df["year"] == int(year_selected)]
+    if "year" in payment_summary_df.columns:
+        payment_summary_df = payment_summary_df[payment_summary_df["year"] == int(year_selected)]
+    if "year" in hourly_summary_df.columns:
+        hourly_summary_df = hourly_summary_df[hourly_summary_df["year"] == int(year_selected)]
+
+payment_summary_df = payment_summary_df.set_index("payment_method")
+
 # ===================
 # Derived Metrics
 # ===================
@@ -64,7 +49,6 @@ else:
 monthly_summary_df["month_date"] = pd.to_datetime(monthly_summary_df["month_date"])
 monthly_summary_df["month_num"] = monthly_summary_df["month_date"].dt.month
 monthly_summary_df = monthly_summary_df.set_index("month_date")
-
 monthly_summary_df = monthly_summary_df.sort_values("month_date")
 
 # ==========

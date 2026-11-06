@@ -28,7 +28,7 @@ CREATE EXTERNAL TABLE {YELLOW_TAXI_TABLE_NAME} (
   `fare_amount` double, 
   `trip_duration_min` double, 
   `speed_mph` double,
-   `payment_type` int
+  `payment_type` int
 )
 PARTITIONED BY ( 
   `year` int, 

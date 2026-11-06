@@ -1,7 +1,8 @@
 from src.data_ingestion.download_tlc import get_all_available, stream_download_to_s3, get_last_processed, save_last_processed
 from src.etl.process_taxi_data import process_file_from_s3_with_retry
+from src.analytics.precompute_dashboard import precompute_dashboard_metrics
 import src.utils.logger as logger
-from src.config import START_YEAR, END_YEAR
+from src.config import START_YEAR
 import logging
 
 logger.setup_logger()
@@ -56,6 +57,11 @@ def main():
             logger_object.exception(f"Failed processing {year}-{month:02d}: {e}")
             # optional: stop pipeline OR continue
             raise
+
+    try:
+        precompute_dashboard_metrics()
+    except Exception as e:
+        logger_object.exception(f"Failed precomputing dashboard metrics: {e}")
 
     logger_object.info("Pipeline finished successfully")
 
