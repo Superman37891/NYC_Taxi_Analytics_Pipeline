@@ -34,7 +34,7 @@ def main():
 
     if not to_process:
         logger_object.info("No new data to process (already up to date)")
-        return
+        #return
 
     logger_object.info(f"Backfill queue size: {len(to_process)}")
 
