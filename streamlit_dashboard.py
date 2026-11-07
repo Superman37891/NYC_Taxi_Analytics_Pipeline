@@ -11,6 +11,8 @@ for key, value in st.secrets.items():
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path.insert(0, PROJECT_ROOT)
+
+s3 = get_s3_client()
 BUCKET = st.secrets["YELLOW_TAXI_BUCKET_NAME"]
 DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
@@ -21,7 +23,11 @@ def load_parquet(name: str) -> pd.DataFrame:
     return pd.read_parquet(BytesIO(obj["Body"].read()))
 
 # Sidebar
-available_years_df = load_parquet("available_years.parquet")
+
+# health check
+try:
+    available_years_df = load_parquet("available_years.parquet")
+    st.success(f"Succcessfully loaded data. Available years: {available_years_df['year'].tolist()}")
 available_years = sorted(available_years_df["year"].astype(int).tolist(), reverse=True)
 year_options = ["All Years"] + available_years
 year_selected = st.sidebar.selectbox("Select Year", year_options)
