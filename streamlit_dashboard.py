@@ -1,7 +1,7 @@
 import sys
 import os
 import streamlit as st
-import awswrangler as wr
+from io import BytesIO
 import pandas as pd
 
 for key, value in st.secrets.items():
@@ -17,7 +17,8 @@ DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 @st.cache_data(ttl=3600*6)
 def load_parquet(name: str) -> pd.DataFrame:
     path = f"{DASHBOARD_PREFIX}/{name}"
-    return wr.s3.read_parquet(path)
+    obj = s3.get_object(Bucket=BUCKET, Key=key)
+    return pd.read_parquet(BytesIO(obj["Body"].read()))
 
 # Sidebar
 available_years_df = load_parquet("available_years.parquet")

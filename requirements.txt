@@ -8,4 +8,3 @@ pyathena
 python-dotenv
 requests
 streamlit
-awswrangler
