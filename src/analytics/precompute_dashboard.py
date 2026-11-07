@@ -1,9 +1,6 @@
 import os
 import pandas as pd
 from pyathena import connect
-from io import BytesIO
-import pyarrow as pa
-import pyarrow.parquet as pq
 from src.etl.process_taxi_data import write_parquet_to_s3
 import src.analytics.queries as queries
 from src.utils.s3_client import get_s3_client
