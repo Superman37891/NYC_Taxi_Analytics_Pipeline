@@ -28,6 +28,11 @@ def load_parquet(name: str) -> pd.DataFrame:
 try:
     available_years_df = load_parquet("available_years.parquet")
     st.success(f"Succcessfully loaded data. Available years: {available_years_df['year'].tolist()}")
+except Exception as e:
+    st.error("Failed to load dashboard data")
+    st.exception(e)          # shows the full traceback
+    st.stop()
+
 available_years = sorted(available_years_df["year"].astype(int).tolist(), reverse=True)
 year_options = ["All Years"] + available_years
 year_selected = st.sidebar.selectbox("Select Year", year_options)
