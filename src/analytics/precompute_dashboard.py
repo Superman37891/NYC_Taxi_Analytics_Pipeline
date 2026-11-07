@@ -26,6 +26,9 @@ def run_and_save(query: str, s3_path: str, connection):
     print(f"Wrote {len(df)} rows → {s3_path}")
 
 def precompute_dashboard_metrics():
+    db = os.environ.get("YELLOW_TAXI_DATABASE")
+    print(f"YELLOW_TAXI_DATABASE: '{db}'")
+    print(f"Length: {len(db) if db else 0}")
     conn = get_athena_connection()
 
     # 1. Available years
