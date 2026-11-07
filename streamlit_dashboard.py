@@ -19,6 +19,7 @@ DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
 @st.cache_data(ttl=3600*6)
 def load_parquet(name: str) -> pd.DataFrame:
+    key=f"{DASHBOARD_PREFIX}/{name}"
     obj = s3.get_object(Bucket=BUCKET, Key=key)
     return pd.read_parquet(BytesIO(obj["Body"].read()))
 
@@ -44,7 +45,7 @@ hourly_summary_df  = load_parquet("hourly_summary_overall.parquet")
 
 # Filter by specific years if not all years selected
 if year_selected != "All Years":
-    year_selected - int(year_selected)
+    year_selected = int(year_selected)
     if "year" in monthly_summary_df.columns:
         monthly_summary_df = monthly_summary_df[monthly_summary_df["year"] == int(year_selected)]
     if "year" in payment_summary_df.columns:
