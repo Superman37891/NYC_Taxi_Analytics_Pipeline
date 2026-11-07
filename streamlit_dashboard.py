@@ -3,7 +3,7 @@ import os
 import streamlit as st
 from io import BytesIO
 import pandas as pd
-from src.utils.s3_client import get_s3_client
+import boto3
 
 for key, value in st.secrets.items():
     os.environ[key] = str(value)
@@ -13,7 +13,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
-s3 = get_s3_client()
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=st.secrets["YELLOW_TAXI_AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=st.secrets["YELLOW_TAXI_AWS_SECRET_ACCESS_KEY"],
+    region_name=st.secrets["YELLOW_TAXI_AWS_REGION"]
+)
 BUCKET = st.secrets["YELLOW_TAXI_BUCKET_NAME"]
 DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
