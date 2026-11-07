@@ -61,6 +61,7 @@ def main():
         precompute_dashboard_metrics()
     except Exception as e:
         logger_object.exception(f"Failed precomputing dashboard metrics: {e}")
+        raise
 
     logger_object.info("Pipeline finished successfully")
 

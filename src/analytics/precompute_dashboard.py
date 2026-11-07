@@ -15,6 +15,7 @@ def get_athena_connection():
     return connect(
         s3_staging_dir=os.environ["YELLOW_TAXI_S3_STAGING_DIR"],
         region_name=os.environ["YELLOW_TAXI_AWS_REGION"],
+        schema_name = os.environ["YELLOW_TAXI_DATABASE"]
     )
 
 def run_and_save(query: str, s3_path: str, connection):
