@@ -3,6 +3,7 @@ import os
 import streamlit as st
 from io import BytesIO
 import pandas as pd
+from src.utils.s3_client import get_s3_client
 
 for key, value in st.secrets.items():
     os.environ[key] = str(value)
