@@ -1,8 +1,18 @@
 import os
 import pandas as pd
 from pyathena import connect
-import awswrangler as wr
+from io import BytesIO
+import pyarrow as pa
+import pyarrow.parquet as pq
+from src.etl.process_taxi_data import write_parquet_to_s3
 import src.analytics.queries as queries
+from src.utils.s3_client import get_s3_client
+import src.config as config
+
+s3 = get_s3_client()
+BUCKET = config.YELLOW_TAXI_BUCKET_NAME
+
+YELLOW_TAXI_DASHBOARD_BASE_DIR = config.YELLOW_TAXI_DASHBOARD_BASE_DIR
 
 def get_athena_connection():
     return connect(
@@ -14,22 +24,20 @@ def run_and_save(query: str, s3_path: str, connection):
     df = pd.read_sql(query, connection)
     # normalize column names
     df.columns = df.columns.str.lower()
-    wr.s3.to_parquet(df, s3_path, index=False, dataset=False)
+    write_parquet_to_s3(df, s3_path)
     print(f"Wrote {len(df)} rows → {s3_path}")
 
 def precompute_dashboard_metrics():
     conn = get_athena_connection()
-    bucket = os.environ["YELLOW_TAXI_BUCKET_NAME"]
-    dashboard_base_dir = os.environ["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
     # 1. Available years
-    run_and_save(queries.AVAILABLE_YEARS_QUERY, f"{dashboard_base_dir}/available_years.parquet", conn)
+    run_and_save(queries.AVAILABLE_YEARS_QUERY, f"{YELLOW_TAXI_DASHBOARD_BASE_DIR}/available_years.parquet", conn)
 
     # 2. Overall monthly summary
-    run_and_save(queries.KPI_OVERALL_MONTHLY_SUMMARY_QUERY, f"{dashboard_base_dir}/monthly_summary_overall.parquet", conn)
+    run_and_save(queries.KPI_OVERALL_MONTHLY_SUMMARY_QUERY, f"{YELLOW_TAXI_DASHBOARD_BASE_DIR}/monthly_summary_overall.parquet", conn)
 
     # 3. Overall payment + hourly
-    run_and_save(queries.KPI_OVERALL_PAYMENT_TYPE_SUMMARY_QUERY, f"{dashboard_base_dir}/payment_summary_overall.parquet", conn)
-    run_and_save(queries.OVERALL_HOURLY_TRIPS_QUERY, f"{dashboard_base_dir}/hourly_summary_overall.parquet", conn)
+    run_and_save(queries.KPI_OVERALL_PAYMENT_TYPE_SUMMARY_QUERY, f"{YELLOW_TAXI_DASHBOARD_BASE_DIR}/payment_summary_overall.parquet", conn)
+    run_and_save(queries.OVERALL_HOURLY_TRIPS_QUERY, f"{YELLOW_TAXI_DASHBOARD_BASE_DIR}/hourly_summary_overall.parquet", conn)
 
     print("Dashboard pre-compute finished")

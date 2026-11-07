@@ -65,7 +65,7 @@ def write_parquet_to_s3(df, key):
     pq.write_table(table, buffer)
     buffer.seek(0)
     s3.put_object(
-        Bucket = YELLOW_TAXI_BUCKET_NAME,
+        Bucket=YELLOW_TAXI_BUCKET_NAME,
         Key=key,
         Body=buffer.getvalue()
     )
@@ -251,9 +251,7 @@ def process_file_from_s3(key: str, to_detect_duplicates=detect_duplicates):
     expected_year, expected_month = extract_partition_from_key(key)
 
     processed_key = (
-        f"{PROCESSED_PREFIX}"
-        f"year={expected_year}/month={str(expected_month).zfill(2)}/"
-        f"{file_name}"
+        f"{PROCESSED_PREFIX}/year={expected_year}/month={str(expected_month).zfill(2)}/{file_name}"
     )
 
     if check_if_file_exists_in_s3(YELLOW_TAXI_BUCKET_NAME, processed_key) and to_detect_duplicates:
@@ -286,12 +284,6 @@ def process_file_from_s3(key: str, to_detect_duplicates=detect_duplicates):
     cleaned_df_len = len(df_clean)
 
     df_clean = df_clean.drop(columns=["valid_payment"])
-
-    processed_key = (
-        f"{PROCESSED_PREFIX}"
-        f"year={expected_year}/month={str(expected_month).zfill(2)}/"
-        f"{file_name}"
-    )
 
     # ---------------------------
     # Logging

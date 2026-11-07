@@ -57,7 +57,6 @@ def main():
             logger_object.exception(f"Failed processing {year}-{month:02d}: {e}")
             # optional: stop pipeline OR continue
             raise
-
     try:
         precompute_dashboard_metrics()
     except Exception as e:
