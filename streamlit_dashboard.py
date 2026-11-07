@@ -19,7 +19,6 @@ DASHBOARD_PREFIX = st.secrets["YELLOW_TAXI_DASHBOARD_BASE_DIR"]
 
 @st.cache_data(ttl=3600*6)
 def load_parquet(name: str) -> pd.DataFrame:
-    path = f"{DASHBOARD_PREFIX}/{name}"
     obj = s3.get_object(Bucket=BUCKET, Key=key)
     return pd.read_parquet(BytesIO(obj["Body"].read()))
 
